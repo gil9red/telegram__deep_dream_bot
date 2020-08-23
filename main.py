@@ -242,7 +242,7 @@ def on_deep_dream(update: Update, context: CallbackContext):
         elapsed_secs = time.perf_counter() - t
         context.user_data['elapsed_secs'] = elapsed_secs
 
-        log.debug(f'Command: {command!r}, elapsed_secs: {elapsed_secs} secs, saving to: {file_name_last}')
+        log.debug(f'Command: {command!r}, elapsed_secs: {elapsed_secs:.2f} secs, saving to: {file_name_last}')
 
         mess_wait.delete()
 
