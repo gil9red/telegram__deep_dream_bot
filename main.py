@@ -195,8 +195,6 @@ def on_photo(update: Update, context: CallbackContext):
     )
 
 
-# TODO: Подсчитывать среднее время выполнения deep_dream
-#       писать юзеру сколько примерно нужно ждать в расчете по среднему времени
 @run_async
 @catch_error(log)
 @log_func(log)
