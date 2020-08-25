@@ -145,6 +145,18 @@ def reset_img(user_id: int):
     shutil.copy(file_name_orig, file_name_last)
 
 
+def start_progress(context: CallbackContext):
+    context.user_data['progress'] = True
+
+
+def is_progress(context: CallbackContext) -> bool:
+    return context.user_data.get('progress', False)
+
+
+def finish_progress(context: CallbackContext):
+    context.user_data['progress'] = False
+
+
 log = get_logger(__file__)
 
 
@@ -188,6 +200,7 @@ def on_photo(update: Update, context: CallbackContext):
 
     # Reset
     context.user_data['elapsed_secs'] = -1
+    finish_progress(context)
 
     update.message.reply_text(
         'Deep dream are now available',
@@ -205,52 +218,61 @@ def on_deep_dream(update: Update, context: CallbackContext):
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
 
-    file_name_orig = get_file_name_image(user_id)
+    if is_progress(context):
+        message.reply_text('Please wait, the command is currently running')
+        return
 
-    if command == COMMAND_GET_ORIGINAL_PHOTO:
-        file_name = file_name_orig
-    else:
-        if command == COMMAND_RETRY:
-            if 'last_command' not in context.user_data:
-                message.reply_text('First you need to execute the commands')
-                return
+    start_progress(context)
+    try:
+        file_name_orig = get_file_name_image(user_id)
 
-            command = context.user_data['last_command']
-
-        elapsed_secs = context.user_data.get('elapsed_secs', -1)
-        if elapsed_secs > 0:
-            elapsed_secs = context.user_data['elapsed_secs']
-            text = f'Wait ~{math.ceil(elapsed_secs)} seconds'
+        if command == COMMAND_GET_ORIGINAL_PHOTO:
+            file_name = file_name_orig
         else:
-            text = 'Waiting ...'
+            if command == COMMAND_RETRY:
+                if 'last_command' not in context.user_data:
+                    message.reply_text('First you need to execute the commands')
+                    return
 
-        mess_wait = message.reply_text(text)
+                command = context.user_data['last_command']
 
-        file_name_last = get_file_name_image(user_id, True)
-        file_name = file_name_last
+            elapsed_secs = context.user_data.get('elapsed_secs', -1)
+            if elapsed_secs > 0:
+                elapsed_secs = context.user_data['elapsed_secs']
+                text = f'Wait ~{math.ceil(elapsed_secs)} seconds'
+            else:
+                text = 'Waiting ...'
 
-        layer, unit = COMMANDS_DEEP_DREAM[command]
+            mess_wait = message.reply_text(text)
 
-        t = time.perf_counter()
+            file_name_last = get_file_name_image(user_id, True)
+            file_name = file_name_last
 
-        img0 = PIL.Image.open(file_name_last)
-        img0 = np.float32(img0)
-        render_deepdream_from_layer_by_unit(img0, file_name_last, layer, unit)
+            layer, unit = COMMANDS_DEEP_DREAM[command]
 
-        elapsed_secs = time.perf_counter() - t
-        context.user_data['elapsed_secs'] = elapsed_secs
+            t = time.perf_counter()
 
-        log.debug(f'Command: {command!r}, elapsed_secs: {elapsed_secs:.2f} secs, saving to: {file_name_last}')
+            img0 = PIL.Image.open(file_name_last)
+            img0 = np.float32(img0)
+            render_deepdream_from_layer_by_unit(img0, file_name_last, layer, unit)
 
-        mess_wait.delete()
+            elapsed_secs = time.perf_counter() - t
+            context.user_data['elapsed_secs'] = elapsed_secs
 
-        context.user_data['last_command'] = command
+            log.debug(f'Command: {command!r}, elapsed_secs: {elapsed_secs:.2f} secs, saving to: {file_name_last}')
 
-    context.bot.send_chat_action(chat_id, action=ChatAction.UPLOAD_PHOTO)
+            mess_wait.delete()
 
-    message.reply_photo(
-        open(file_name, 'rb')
-    )
+            context.user_data['last_command'] = command
+
+        context.bot.send_chat_action(chat_id, action=ChatAction.UPLOAD_PHOTO)
+
+        message.reply_photo(
+            open(file_name, 'rb')
+        )
+
+    finally:
+        finish_progress(context)
 
 
 @run_async
