@@ -212,7 +212,7 @@ def on_photo(update: Update, context: CallbackContext):
 @catch_error(log)
 @log_func(log)
 def on_deep_dream(update: Update, context: CallbackContext):
-    message = update.message or update.edited_message
+    message = update.effective_message
     command = message.text
 
     chat_id = update.effective_chat.id
@@ -279,7 +279,7 @@ def on_deep_dream(update: Update, context: CallbackContext):
 @catch_error(log)
 @log_func(log)
 def on_reset(update: Update, context: CallbackContext):
-    message = update.message or update.edited_message
+    message = update.effective_message
     user_id = update.effective_user.id
 
     reset_img(user_id)
@@ -291,17 +291,14 @@ def on_reset(update: Update, context: CallbackContext):
 @catch_error(log)
 @log_func(log)
 def on_request(update: Update, context: CallbackContext):
-    message = update.message or update.edited_message
-
-    message.reply_text('Unknown command')
+    update.effective_message.reply_text('Unknown command')
 
 
 @catch_error(log)
 def on_error(update: Update, context: CallbackContext):
     log.exception('Error: %s\nUpdate: %s', context.error, update)
     if update:
-        message = update.message or update.edited_message
-        message.reply_text(config.ERROR_TEXT)
+        update.effective_message.reply_text(config.ERROR_TEXT)
 
 
 def main():
