@@ -13,8 +13,7 @@ import shutil
 
 # pip install python-telegram-bot
 from telegram import Update, ChatAction, ReplyKeyboardMarkup
-from telegram.ext import Updater, MessageHandler, Filters, CallbackContext, CommandHandler, PicklePersistence
-from telegram.ext.dispatcher import run_async
+from telegram.ext import Updater, MessageHandler, Filters, CallbackContext, CommandHandler, PicklePersistence, Defaults
 
 import requests
 
@@ -160,15 +159,13 @@ def finish_progress(context: CallbackContext):
 log = get_logger(__file__)
 
 
-@run_async
 @catch_error(log)
 @log_func(log)
 def on_start(update: Update, context: CallbackContext):
-    message = update.message
+    message = update.effective_message
     message.reply_text('Send me a picture')
 
 
-@run_async
 @catch_error(log)
 @log_func(log)
 def on_photo(update: Update, context: CallbackContext):
@@ -208,7 +205,6 @@ def on_photo(update: Update, context: CallbackContext):
     )
 
 
-@run_async
 @catch_error(log)
 @log_func(log)
 def on_deep_dream(update: Update, context: CallbackContext):
@@ -275,7 +271,6 @@ def on_deep_dream(update: Update, context: CallbackContext):
         finish_progress(context)
 
 
-@run_async
 @catch_error(log)
 @log_func(log)
 def on_reset(update: Update, context: CallbackContext):
@@ -287,7 +282,6 @@ def on_reset(update: Update, context: CallbackContext):
     message.reply_text('Reset was successful')
 
 
-@run_async
 @catch_error(log)
 @log_func(log)
 def on_request(update: Update, context: CallbackContext):
@@ -304,7 +298,7 @@ def on_error(update: Update, context: CallbackContext):
 def main():
     cpu_count = os.cpu_count()
     workers = cpu_count
-    log.debug('System: CPU_COUNT=%s, WORKERS=%s', cpu_count, workers)
+    log.debug(f'System: CPU_COUNT={cpu_count}, WORKERS={workers}')
 
     log.debug('Start')
 
@@ -315,7 +309,7 @@ def main():
         config.TOKEN,
         workers=workers,
         persistence=persistence,
-        use_context=True
+        defaults=Defaults(run_async=True),
     )
 
     # Get the dispatcher to register handlers
