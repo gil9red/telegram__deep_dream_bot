@@ -290,7 +290,7 @@ def on_request(update: Update, context: CallbackContext):
 
 @catch_error(log)
 def on_error(update: Update, context: CallbackContext):
-    log.exception('Error: %s\nUpdate: %s', context.error, update)
+    log.error('Error: %s\nUpdate: %s', context.error, update, exc_info=context.error)
     if update:
         update.effective_message.reply_text(config.ERROR_TEXT)
 
