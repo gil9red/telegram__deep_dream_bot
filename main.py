@@ -169,16 +169,17 @@ def on_start(update: Update, context: CallbackContext):
 @catch_error(log)
 @log_func(log)
 def on_photo(update: Update, context: CallbackContext):
+    message = update.effective_message
     chat_id = update.effective_chat.id
     user_id = update.effective_user.id
 
     msg = 'Downloading a picture ...'
     log.debug(msg)
-    progress_message = update.message.reply_text(msg + '\n⬜⬜⬜⬜⬜')
+    progress_message = message.reply_text(msg + '\n⬜⬜⬜⬜⬜')
 
     context.bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
 
-    url = update.message.photo[-1].get_file().file_path
+    url = message.photo[-1].get_file().file_path
 
     rs = requests.get(url)
 
@@ -199,7 +200,7 @@ def on_photo(update: Update, context: CallbackContext):
     context.user_data['elapsed_secs'] = -1
     finish_progress(context)
 
-    update.message.reply_text(
+    message.reply_text(
         'Deep dream are now available',
         reply_markup=get_reply_keyboard_markup()
     )
